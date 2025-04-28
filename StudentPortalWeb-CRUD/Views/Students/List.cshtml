@@ -1,35 +1,29 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model List<StudentPortalWeb_CRUD.Models.Entities.Student>
 
-@model List<StudentPortalWeb_CRUD.Models.Entities.Student>
-
-<h1>Students List</h1>
+<h1>Interns List</h1>
 
 <table class="table">
-  <thead>
-      <tr>
+    <thead>
+        <tr>
             <th>Id</th>
             <th>Name</th>
             <th>Email</th>
             <th>Phone</th>
             <th></th>
-      </tr>
-  </thead>
-  <tbody>
-      @foreach
-      (var students in Model){
-      <tr>
-                <td>@students.Id</td>
-                <td>@students.Name</td>
-                <td>@students.Email</td>
-                <td>@students.Phone</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var student in Model)
+        {
+            <tr>
+                <td>@student.Id</td>
+                <td>@student.Name</td>
+                <td>@student.Email</td>
+                <td>@student.Phone</td>
                 <td>
-                    <a class="btn btn-primary" asp-controller="Students" asp-action="Edit"  asp-route-id="@students.Id">Edit</a>
+                    <a class="btn btn-primary" asp-controller="Students" asp-action="Edit" asp-route-id="@student.Id">Edit</a>
                 </td>
-      </tr>
-      }
-  </tbody>
+            </tr>
+        }
+    </tbody>
 </table>

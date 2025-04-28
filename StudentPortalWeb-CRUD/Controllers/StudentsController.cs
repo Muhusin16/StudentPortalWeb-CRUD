@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentPortalWeb_CRUD.Data;
 using StudentPortalWeb_CRUD.Models;
@@ -6,24 +7,25 @@ using StudentPortalWeb_CRUD.Models.Entities;
 
 namespace StudentPortalWeb_CRUD.Controllers
 {
+    [Authorize]
     public class StudentsController : Controller
     {
-        private readonly ApplicationDbContext dbContext;
+        private readonly ApplicationDbContext _dbContext;
 
         public StudentsController(ApplicationDbContext dbContext)
         {
-            this.dbContext = dbContext;
+            _dbContext = dbContext;
         }
 
         [HttpGet]
-        public IActionResult Add()
-        {
-            return View();
-        }
+        public IActionResult Add() => View();
 
         [HttpPost]
         public async Task<IActionResult> Add(AddStudentsViewModel viewModel)
         {
+            if (!ModelState.IsValid)
+                return View(viewModel);
+
             var student = new Student
             {
                 Name = viewModel.Name,
@@ -31,59 +33,56 @@ namespace StudentPortalWeb_CRUD.Controllers
                 Phone = viewModel.Phone,
                 Subscribed = viewModel.Subscribed,
             };
-            await dbContext.Students.AddAsync(student);
-            await dbContext.SaveChangesAsync();
 
-            // ✅ Redirect to List after adding
-            return RedirectToAction("List", "Students");
+            await _dbContext.Students.AddAsync(student);
+            await _dbContext.SaveChangesAsync();
+
+            return RedirectToAction(nameof(List));
         }
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            var students = await dbContext.Students.ToListAsync();
+            var students = await _dbContext.Students.ToListAsync();
             return View(students);
         }
 
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var student = await dbContext.Students.FindAsync(id);
-            return View(student);
+            var student = await _dbContext.Students.FindAsync(id);
+            return student is null ? NotFound() : View(student);
         }
 
         [HttpPost]
         public async Task<IActionResult> Edit(Student viewModel)
         {
-            var student = await dbContext.Students.FindAsync(viewModel.Id);
+            var student = await _dbContext.Students.FindAsync(viewModel.Id);
 
-            if (student is not null)
-            {
-                student.Name = viewModel.Name;
-                student.Email = viewModel.Email;
-                student.Phone = viewModel.Phone;
-                student.Subscribed = viewModel.Subscribed;
+            if (student is null)
+                return NotFound();
 
-                await dbContext.SaveChangesAsync();
-            }
+            student.Name = viewModel.Name;
+            student.Email = viewModel.Email;
+            student.Phone = viewModel.Phone;
+            student.Subscribed = viewModel.Subscribed;
 
-            return RedirectToAction("List", "Students");
+            await _dbContext.SaveChangesAsync();
+            return RedirectToAction(nameof(List));
         }
 
         [HttpPost]
-        public async Task<IActionResult> Delete(Student viewModel)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            var student = await dbContext.Students
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == viewModel.Id);
+            var student = await _dbContext.Students.FindAsync(id);
 
-            if (student is not null)
-            {
-                dbContext.Students.Remove(viewModel);
-                await dbContext.SaveChangesAsync();
-            }
+            if (student is null)
+                return NotFound();
 
-            return RedirectToAction("List", "Students");
+            _dbContext.Students.Remove(student);
+            await _dbContext.SaveChangesAsync();
+
+            return RedirectToAction(nameof(List));
         }
     }
 }
